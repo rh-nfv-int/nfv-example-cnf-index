@@ -11,6 +11,7 @@ OPM_REPO       ?= https://github.com/operator-framework/operator-registry
 OS             := $(shell uname -s | tr '[:upper:]' '[:lower:]')
 ARCH           := $(shell uname -m | sed 's/x86_64/amd64/')
 OPERATORS_LIST := operators.cfg
+SHELL          := /bin/bash
 
 all: index-build index-push
 
