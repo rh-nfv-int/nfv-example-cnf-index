@@ -9,6 +9,7 @@ on:
 
 env:
   REGISTRY: quay.io
+  OCP_VERSIONS: "4.5 4.6 4.7 4.8 4.9"
 
 jobs:
   build:
@@ -27,3 +28,29 @@ jobs:
           TAG=$(git tag --points-at HEAD)
           VERSION=${TAG/v/}
           make all ORG=${ORG} VERSION=${VERSION}
+
+      - name: Add component to DCI (distributed-ci.io)
+        run: |
+          REPO_NAME=${GITHUB_REPOSITORY/*\/}}
+          CANONICAL_NAME=
+          pip install dciclient
+          source <(cat <<EOF
+          ${{ secrets.REMOTECI }}
+          EOF
+          )
+          TAG=$(git tag --points-at HEAD)
+          NAME="${REPO_NAME}:${TAG}"
+          CANONICAL="${CANONICAL_NAME}:${TAG}"
+          TYPE="operator-index"
+          URL="${REGISTRY}/${GITHUB_REPOSITORY}:${TAG}"
+          TEAM_ID=$( dcictl --format json team-list | jq -r '.teams[]|.id' )
+          for ocp_version in ${OCP_VERSIONS}; do
+            topic_id=$( dcictl --format json topic-list | jq -r '.topics[]| select(.name=="OCP-${ocp_version}")|.id' )
+            dcictl component-create \
+              --topic-id ${topic_id} \
+              --team-id ${TEAM_ID} \
+              --name ${NAME} \
+              --canonical_project_name ${CANONICAL} \
+              --type ${TYPE} \
+              --url ${URL}
+          done
