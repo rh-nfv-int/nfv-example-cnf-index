@@ -27,7 +27,7 @@ jobs:
           ORG=${GITHUB_REPOSITORY%/*}
           TAG=$(git tag --points-at HEAD)
           VERSION=${TAG/v/}
-          make all ORG=${ORG} VERSION=${VERSION}
+        #  make all ORG=${ORG} VERSION=${VERSION}
 
       - name: Add component to DCI (distributed-ci.io)
         run: |
@@ -37,6 +37,7 @@ jobs:
           ${{ secrets.DCI_REMOTECI }}
           EOF
           )
+          echo -${DCI_CS_URL}-
           TAG=$(git tag --points-at HEAD)
           NAME="${TAG}"
           CANONICAL_NAME="${REPO_NAME}:${TAG}"
@@ -44,13 +45,14 @@ jobs:
           CONTAINER_URL="${REGISTRY}/${GITHUB_REPOSITORY}"
           DATA='{"url": "'${CONTAINER_URL}'"}'
           TEAM_ID=$( dcictl --format json team-list | jq -r '.teams[]|.id' )
-          for ocp_version in ${OCP_VERSIONS}; do
-            topic_id=$( dcictl --format json topic-list | jq -r '.topics[]| select(.name=="OCP-${ocp_version}")|.id' )
-            dcictl component-create \
-              --topic-id ${topic_id} \
-              --team-id ${TEAM_ID} \
-              --name ${NAME} \
-              --canonical_project_name ${CANONICAL_NAME} \
-              --type ${TYPE} \
-              --data "${DATA}"
-          done
+          echo -${TEAM_ID}-
+        #  for ocp_version in ${OCP_VERSIONS}; do
+        #    topic_id=$( dcictl --format json topic-list | jq -r '.topics[]| select(.name=="OCP-${ocp_version}")|.id' )
+        #    dcictl component-create \
+        #      --topic-id ${topic_id} \
+        #      --team-id ${TEAM_ID} \
+        #      --name ${NAME} \
+        #      --canonical_project_name ${CANONICAL_NAME} \
+        #      --type ${TYPE} \
+        #      --data "${DATA}"
+        #  done
