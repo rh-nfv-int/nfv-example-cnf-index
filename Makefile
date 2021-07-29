@@ -1,4 +1,4 @@
-VERSION        := 0.2.7
+VERSION        := 0.2.6-1
 TAG            := v$(VERSION)
 REGISTRY       ?= quay.io
 ORG            ?= rh-nfv-int

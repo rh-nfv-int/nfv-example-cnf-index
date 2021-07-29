@@ -8,6 +8,9 @@ All notable changes to this project will be documented in this file.
 
 - [testpmd-lb-operator:v0.2.6](https://github.com/rh-nfv-int/testpmd-lb-operator/blob/master/CHANGELOG.md#026---2021-07-28)
 
+## [0.2.6-1] - 2021-07-29
+
+- Temporary release to align operator versions
 ## [0.2.6] - 2021-07-01
 
 - Add support to disconnected environments (SHA2 digest)
