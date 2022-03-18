@@ -6,8 +6,10 @@ CONTAINER_CLI  ?= podman
 CLUSTER_CLI    ?= oc
 INDEX_NAME     := nfv-example-cnf-catalog
 INDEX_IMG      ?= $(REGISTRY)/$(ORG)/$(INDEX_NAME):$(TAG)
+BUILD_PATH     ?= ./build
+DEFAULT_CHANNEL?= stable
 # Don't use latest until FBC has been sorted out
-OPM_VERSION    ?= 1.19.5
+OPM_VERSION    ?= latest
 OPM_REPO       ?= https://github.com/operator-framework/operator-registry
 OS             := $(shell uname -s | tr '[:upper:]' '[:lower:]')
 ARCH           := $(shell uname -m | sed 's/x86_64/amd64/')
@@ -20,15 +22,24 @@ all: index-build index-push
 index-build: opm
 	@{ \
 	set -e ;\
+	mkdir -p $(BUILD_PATH)/$(INDEX_NAME) ;\
+	cp "$(INDEX_NAME).Dockerfile" $(BUILD_PATH)/ ;\
 	source ./$(OPERATORS_LIST) ;\
 	BUNDLES_DIGESTS='' ;\
 	for OPERATOR in $${OPERATORS[@]}; do \
-    	operator_bundle=$${OPERATOR/:*}-bundle ;\
-    	operator_version=$${OPERATOR/*:} ;\
-    	operator_digest=$$(skopeo inspect docker://$(REGISTRY)/$(ORG)/$${operator_bundle}:$${operator_version} | jq -r '.Digest') ;\
-	BUNDLES_DIGESTS+=$(REGISTRY)/$(ORG)/$${operator_bundle}@$${operator_digest}, ;\
+		operator_bundle=$${OPERATOR/:*}-bundle ;\
+		operator_version=$${OPERATOR/*:} ;\
+		operator_name=$${OPERATOR/:*} ;\
+		operator_digest=$$(skopeo inspect docker://$(REGISTRY)/$(ORG)/$${operator_bundle}:$${operator_version} | jq -r '.Digest') ;\
+		channel="---\nschema: olm.channel\npackage: $${operator_name}\nname: stable\nentries:\n  - name: $${operator_name}.$${operator_version}" ;\
+		BUNDLES_DIGEST=$(REGISTRY)/$(ORG)/$${operator_bundle}@$${operator_digest} ;\
+		$(OPM) init $${operator_name} --default-channel=$(DEFAULT_CHANNEL) --output=yaml >> $(BUILD_PATH)/$(INDEX_NAME)/index.yml ;\
+		$(OPM) render $${BUNDLES_DIGEST} --output=yaml >> $(BUILD_PATH)/$(INDEX_NAME)/index.yml ;\
+		echo -e $${channel} >> $(BUILD_PATH)/$(INDEX_NAME)/index.yml ;\
 	done ;\
-	$(OPM) index add --bundles $${BUNDLES_DIGESTS%,} --tag $(INDEX_IMG) ;\
+	$(OPM) validate $(BUILD_PATH)/$(INDEX_NAME) ;\
+	podman build $(BUILD_PATH) -f $(BUILD_PATH)/$(INDEX_NAME).Dockerfile -t $(INDEX_IMG) ;\
+	rm -rf $(BUILD_PATH) ;\
 	}
 
 # Push the index image
