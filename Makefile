@@ -7,7 +7,6 @@ CLUSTER_CLI    ?= oc
 INDEX_NAME     := nfv-example-cnf-catalog
 INDEX_IMG      ?= $(REGISTRY)/$(ORG)/$(INDEX_NAME):$(TAG)
 BUILD_PATH     ?= ./build
-DEFAULT_CHANNEL?= stable
 # Don't use latest until FBC has been sorted out
 OPM_VERSION    ?= latest
 OPM_REPO       ?= https://github.com/operator-framework/operator-registry
@@ -25,16 +24,16 @@ index-build: opm
 	mkdir -p $(BUILD_PATH)/$(INDEX_NAME) ;\
 	cp "$(INDEX_NAME).Dockerfile" $(BUILD_PATH)/ ;\
 	source ./$(OPERATORS_LIST) ;\
-	BUNDLES_DIGESTS='' ;\
 	for OPERATOR in $${OPERATORS[@]}; do \
 		operator_bundle=$${OPERATOR/:*}-bundle ;\
 		operator_version=$${OPERATOR/*:} ;\
 		operator_name=$${OPERATOR/:*} ;\
 		operator_digest=$$(skopeo inspect docker://$(REGISTRY)/$(ORG)/$${operator_bundle}:$${operator_version} | jq -r '.Digest') ;\
-		channel="---\nschema: olm.channel\npackage: $${operator_name}\nname: stable\nentries:\n  - name: $${operator_name}.$${operator_version}" ;\
-		BUNDLES_DIGEST=$(REGISTRY)/$(ORG)/$${operator_bundle}@$${operator_digest} ;\
-		$(OPM) init $${operator_name} --default-channel=$(DEFAULT_CHANNEL) --output=yaml >> $(BUILD_PATH)/$(INDEX_NAME)/index.yml ;\
-		$(OPM) render $${BUNDLES_DIGEST} --output=yaml >> $(BUILD_PATH)/$(INDEX_NAME)/index.yml ;\
+		bundle_digest=$(REGISTRY)/$(ORG)/$${operator_bundle}@$${operator_digest} ;\
+		default_channel=$$(podman inspect $${bundle_digest} | jq -r '.[].Labels."operators.operatorframework.io.bundle.channel.default.v1"') ;\
+		channel="---\nschema: olm.channel\npackage: $${operator_name}\nname: $${default_channel}\nentries:\n  - name: $${operator_name}.$${operator_version}" ;\
+		$(OPM) init $${operator_name} --default-channel=$${default_channel} --output=yaml >> $(BUILD_PATH)/$(INDEX_NAME)/index.yml ;\
+		$(OPM) render $${bundle_digest} --output=yaml >> $(BUILD_PATH)/$(INDEX_NAME)/index.yml ;\
 		echo -e $${channel} >> $(BUILD_PATH)/$(INDEX_NAME)/index.yml ;\
 	done ;\
 	$(OPM) validate $(BUILD_PATH)/$(INDEX_NAME) ;\
