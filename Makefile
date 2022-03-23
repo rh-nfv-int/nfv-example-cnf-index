@@ -7,7 +7,6 @@ CLUSTER_CLI    ?= oc
 INDEX_NAME     := nfv-example-cnf-catalog
 INDEX_IMG      ?= $(REGISTRY)/$(ORG)/$(INDEX_NAME):$(TAG)
 BUILD_PATH     ?= ./build
-# Don't use latest until FBC has been sorted out
 OPM_VERSION    ?= latest
 OPM_REPO       ?= https://github.com/operator-framework/operator-registry
 OS             := $(shell uname -s | tr '[:upper:]' '[:lower:]')
@@ -37,7 +36,7 @@ index-build: opm
 		echo -e $${channel} >> $(BUILD_PATH)/$(INDEX_NAME)/index.yml ;\
 	done ;\
 	$(OPM) validate $(BUILD_PATH)/$(INDEX_NAME) ;\
-	podman build $(BUILD_PATH) -f $(BUILD_PATH)/$(INDEX_NAME).Dockerfile -t $(INDEX_IMG) ;\
+	BUILDAH_FORMAT=docker podman build $(BUILD_PATH) -f $(BUILD_PATH)/$(INDEX_NAME).Dockerfile -t $(INDEX_IMG) ;\
 	rm -rf $(BUILD_PATH) ;\
 	}
 
