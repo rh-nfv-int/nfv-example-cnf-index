@@ -29,6 +29,7 @@ index-build: opm
 		operator_name=$${OPERATOR/:*} ;\
 		operator_digest=$$(skopeo inspect docker://$(REGISTRY)/$(ORG)/$${operator_bundle}:$${operator_version} | jq -r '.Digest') ;\
 		bundle_digest=$(REGISTRY)/$(ORG)/$${operator_bundle}@$${operator_digest} ;\
+		podman pull $${bundle_digest} ;\
 		default_channel=$$(podman inspect $${bundle_digest} | jq -r '.[].Labels."operators.operatorframework.io.bundle.channel.default.v1"') ;\
 		channel="---\nschema: olm.channel\npackage: $${operator_name}\nname: $${default_channel}\nentries:\n  - name: $${operator_name}.$${operator_version}" ;\
 		$(OPM) init $${operator_name} --default-channel=$${default_channel} --output=yaml >> $(BUILD_PATH)/$(INDEX_NAME)/index.yml ;\
