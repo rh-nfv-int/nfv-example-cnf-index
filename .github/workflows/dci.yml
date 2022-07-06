@@ -33,7 +33,7 @@ jobs:
           componentName: ${{ github.ref_name }}
           componentCanonicalName: ${{ steps.repo.outputs.name }}:${{ github.ref_name }}
           componentType: nfv-example-cnf-index
-          componentData: {"url":"${{ env.REGISTRY }}/${{ github.repository_owner }}/nfv-example-cnf-catalog"}
+          componentData: '{"url": "${{ env.REGISTRY }}/${{ github.repository_owner }}/nfv-example-cnf-catalog"}'
         id: dci
 
       - name: Results
