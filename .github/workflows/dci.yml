@@ -10,7 +10,7 @@ on:
 
 env:
   REGISTRY: quay.io
-  OCP_VERSIONS: "all"
+  OCP_VERSIONS: "4.8,4.9"
 
 jobs:
   build:
@@ -41,5 +41,5 @@ jobs:
           echo "## DCI components" >> ${GITHUB_STEP_SUMMARY}
           echo "" >> ${GITHUB_STEP_SUMMARY}
           echo "```JSON" >> ${GITHUB_STEP_SUMMARY}
-          echo ${{ steps.dci.outputs.components }} | jq . >> ${GITHUB_STEP_SUMMARY} 
+          <<<'${{ steps.dci.outputs.components }}' jq . >> ${GITHUB_STEP_SUMMARY} 
           echo "```" >> ${GITHUB_STEP_SUMMARY}
