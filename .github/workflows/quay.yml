@@ -19,7 +19,7 @@ jobs:
         uses: actions/checkout@v3
 
       - name: Log in to Quay.io
-        uses: redhat-actions/podman-login@v1.4
+        uses: redhat-actions/podman-login@v1
         with:
           username: ${{ secrets.QUAY_USER }}
           password: ${{ secrets.QUAY_TOKEN }}
@@ -32,23 +32,18 @@ jobs:
           VERSION=${TAG/v/}
           make all ORG=${ORG} VERSION=${VERSION}
 
-      - name: Get repo name
-        run: echo "::set-output name=name::${GITHUB_REPOSITORY/*\/}"
-        id: repo
-
       - name: Create DCI components
-        uses: dci-labs/dci-component@v1.0.1
+        uses: dci-labs/dci-component@v1
         with:
           dciClientId: ${{ secrets.DCI_CLIENT_ID }}
           dciApiSecret: ${{ secrets.DCI_API_SECRET }}
           dciTopics: '
-          OCP-4.7,
-          OCP-4.8,
           OCP-4.9,
           OCP-4.10,
           OCP-4.11,
           OCP-4.12,
-          OCP-4.13
+          OCP-4.13,
+          OCP-4.14,
           '
           componentName: nfv-example-cnf-index
           componentVersion: ${{ github.ref_name }}
@@ -60,7 +55,7 @@ jobs:
         run: |
           echo "## DCI components" >> ${GITHUB_STEP_SUMMARY}
           echo "" >> ${GITHUB_STEP_SUMMARY}
-          echo "```JSON" >> ${GITHUB_STEP_SUMMARY}
+          echo "\`\`\`JSON" >> ${GITHUB_STEP_SUMMARY}
           <<<'${{ steps.dci.outputs.components }}' jq . >> ${GITHUB_STEP_SUMMARY} 
-          echo "```" >> ${GITHUB_STEP_SUMMARY}
+          echo "\`\`\`" >> ${GITHUB_STEP_SUMMARY}
           echo "" >> ${GITHUB_STEP_SUMMARY}
